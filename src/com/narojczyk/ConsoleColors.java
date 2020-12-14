@@ -1,4 +1,4 @@
-package pl.coderslab;
+package com.narojczyk;
 
 
 /**
