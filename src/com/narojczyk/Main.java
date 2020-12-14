@@ -48,7 +48,56 @@ public class Main {
 
     public static void addToDB() {
         System.out.println(GREEN + "Add entry to database" + RESET);
-        System.out.println(RED_BOLD + "This functionality is not implemented yet" + RESET);
+        System.out.println(RED_BOLD + "Does not store data in array yet" + RESET);
+
+        Scanner scan = new Scanner(System.in);
+        boolean dateFormatOK = false, taskFlag = true;
+        String taskDesc, taskDate, taskFlagStr = "";
+        String[] taskDateTest = new String[3];
+
+        // Enter data for the first filed
+        System.out.print("Type in task description: ");
+        taskDesc = scan.nextLine().trim().replaceAll(",", " ");
+
+        // Enter data for the second filed
+        taskDate = askForDate();
+        taskDateTest = taskDate.split("-");
+        while(!dateFormatOK) {
+            if ( (testForInt(taskDateTest[0]) == null ||
+                    testForInt(taskDateTest[1]) == null || testForInt(taskDateTest[2]) == null) ||
+                 ((Integer.valueOf(taskDateTest[1])>12 || Integer.valueOf(taskDateTest[2])>31 )) ) {
+                // Not the best test but it's a start
+                System.out.println("Wrong format or values");
+                taskDate = askForDate();
+                taskDateTest = taskDate.split("-");
+            }else{
+                dateFormatOK = true;
+            }
+        }
+
+        // Enter data for the third filed
+        while( (taskFlag && !taskFlagStr.equals("true")) || (!taskFlag && !taskFlagStr.equals("false") ) ){
+            System.out.print("Type in task flag [true/false]: ");
+            taskFlagStr = scan.nextLine().trim();
+            taskFlag = Boolean.parseBoolean(taskFlagStr);
+        }
+
+        // Display the generated entry
+        System.out.println("Given entry to store:\n\t" + taskDesc +"\t" + taskDate + "\t" + taskFlag);
+    }
+
+    public static String askForDate(){
+        Scanner scan = new Scanner(System.in);
+        System.out.print("Type date [YYYY-MM-DD]: ");
+        return scan.nextLine().trim();
+    }
+
+    public static Integer testForInt(String text) {
+      try {
+        return Integer.parseInt(text);
+      } catch (NumberFormatException e) {
+        return null;
+      }
     }
 
     public static void removeFromDB() {
@@ -65,7 +114,7 @@ public class Main {
 
         System.out.print("Type in your selection: ");
         while (!validSelection) {
-            selection = scan.next().trim();
+            selection = scan.nextLine().trim();
             for(int i=0; i< menu.length; i++){
                 if(selection.equals(menu[i])){
                     validSelection = true;
@@ -78,12 +127,6 @@ public class Main {
             }
         }
 
-
-        /* else{
-                    System.out.println("Nieprawidłowe dane. Podaj jeszcze raz:");
-                }*/
-
-        // TODO return user selected (valid) string
         return selection;
     }
 
@@ -163,7 +206,7 @@ public class Main {
 
     public static void printMainMenu(String menu[], boolean anyModyficationsDone){
         int maxMenuItems = ((anyModyficationsDone) ? 0 : -1) + menu.length;
-        System.out.println(BLUE + "Please select an option:" + RESET);
+        System.out.println("\n" + BLUE + "Please select an option:" + RESET);
         for(int i=0; i< maxMenuItems; i++){
             System.out.println("* "+ menu[i]);
         }
