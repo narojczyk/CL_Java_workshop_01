@@ -12,7 +12,7 @@ public class Main {
         String database = "tasks.csv";
         String menuItems[] = {"add", "remove", "list", "help", "exit", "!exit"};
         String menuSelect;
-        boolean dbModified = false;
+        boolean dbModified = false, addToDBvalidData = false;
         int[] taskdim = {0,0};
 
         inspectDBfromFile(database, taskdim);
@@ -24,7 +24,7 @@ public class Main {
             menuSelect = selectAction(menuItems, dbModified);
 
             if(menuSelect.equals(menuItems[0])){
-                addToDB();
+                addToDBvalidData = getDataToBeAddedToDB();
             }
 
             if(menuSelect.equals(menuItems[1])){
@@ -46,33 +46,31 @@ public class Main {
         }
     }
 
-    public static void addToDB() {
+    public static boolean getDataToBeAddedToDB() {
         System.out.println(GREEN + "Add entry to database" + RESET);
         System.out.println(RED_BOLD + "Does not store data in array yet" + RESET);
 
         Scanner scan = new Scanner(System.in);
-        boolean dateFormatOK = false, taskFlag = true;
-        String taskDesc, taskDate, taskFlagStr = "";
+        boolean dateFormatOK = false, taskFlag = true, addConfirmation = false;
+        String taskDesc, taskDate, taskFlagStr = "", addConfirmationStr = "notAsked";
         String[] taskDateTest = new String[3];
 
         // Enter data for the first filed
         System.out.print("Type in task description: ");
-        taskDesc = scan.nextLine().trim().replaceAll(",", " ");
+        taskDesc = scan.nextLine().trim().replaceAll(",", " ").replaceAll("\\s+", " ");
 
         // Enter data for the second filed
         taskDate = askForDate();
-        taskDateTest = taskDate.split("-");
         while(!dateFormatOK) {
-            if ( (testForInt(taskDateTest[0]) == null ||
-                    testForInt(taskDateTest[1]) == null || testForInt(taskDateTest[2]) == null) ||
-                 ((Integer.valueOf(taskDateTest[1])>12 || Integer.valueOf(taskDateTest[2])>31 )) ) {
-                // Not the best test but it's a start
+            // Not the best test but it's a start
+            taskDateTest = splitDateForTesting(taskDate);
+
+            dateFormatOK = testInputDateFormat(taskDateTest);
+            if(!dateFormatOK){
                 System.out.println("Wrong format or values");
                 taskDate = askForDate();
-                taskDateTest = taskDate.split("-");
-            }else{
-                dateFormatOK = true;
             }
+            taskDate = aditionalDateFormatting(taskDateTest);
         }
 
         // Enter data for the third filed
@@ -84,6 +82,53 @@ public class Main {
 
         // Display the generated entry
         System.out.println("Given entry to store:\n\t" + taskDesc +"\t" + taskDate + "\t" + taskFlag);
+        if(!addConfirmation){
+            System.out.print("Confirm add record to database [Y/n]: ");
+            addConfirmationStr = scan.nextLine().trim();
+            if(addConfirmationStr.equals("y") || addConfirmationStr.equals("Y") || addConfirmationStr.length() == 0){
+                addConfirmation = true;
+            }
+        }
+
+        if(addConfirmation){
+            System.out.println("Adding data confirmed");
+        }else{
+            System.out.println("New data discarded");
+        }
+        return addConfirmation;
+    }
+
+    public static boolean testInputDateFormat(String[] dateElements){
+        if ( (testForInt(dateElements[0]) == null ||
+                testForInt(dateElements[1]) == null || testForInt(dateElements[2]) == null) ||
+                ((Integer.valueOf(dateElements[1])>12 || Integer.valueOf(dateElements[2])>31 )) ) {
+            return false;
+        }
+        return true;
+    }
+
+    public static String[] splitDateForTesting(String dateStr){
+        String[] dateElements = new String[3];
+        if(dateStr.split("-").length == 3){
+            dateElements = dateStr.split("-");
+        }else{
+            dateElements[0]="x";
+            dateElements[1]="x";
+            dateElements[2]="x";
+        }
+        //System.out.println(dateElements[0] + " " + dateElements[1] + " " + dateElements[2]);
+        return dateElements;
+    }
+
+    public static String aditionalDateFormatting(String[] dateElements){
+        // Insert '0' if MM < 10 or DD < 10
+        if(dateElements[1].length()==1){
+            dateElements[1] =  "0" + dateElements[1];
+        }
+        if(dateElements[2].length()==1){
+            dateElements[2] =  "0" + dateElements[2];
+        }
+        return dateElements[0]+"-"+dateElements[1]+"-"+dateElements[2];
     }
 
     public static String askForDate(){
@@ -112,8 +157,8 @@ public class Main {
         String selection = "";
         boolean validSelection = false;
 
-        System.out.print("Type in your selection: ");
         while (!validSelection) {
+            System.out.print("Type in your selection: ");
             selection = scan.nextLine().trim();
             for(int i=0; i< menu.length; i++){
                 if(selection.equals(menu[i])){
@@ -123,7 +168,7 @@ public class Main {
                 }
             }
             if(!validSelection){
-                System.out.print("Unrecognized option\nType in your selection: ");
+                System.out.println(RED + "Unrecognized option " + RESET + "\"" + selection + "\"");
             }
         }
 
@@ -169,6 +214,7 @@ public class Main {
     }
 
     public static void readDBfromFile(String fname, String array[][]){
+        // TODO add explicit path to a file (does not work now when run from console
         File file = new File(fname);
         int i=-1;
         try {
@@ -185,6 +231,7 @@ public class Main {
     }
 
     public static void inspectDBfromFile(String fname, int dim[]){
+        // TODO add explicit path to a file (does not work now when run from console
         int maxElements = 0, currentNumOfElements;
         dim[0] = 0;
         dim[1] = 0;
