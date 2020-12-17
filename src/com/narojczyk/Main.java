@@ -12,6 +12,7 @@ public class Main {
         String database = "tasks.csv";
         String menuItems[] = {"add", "remove", "list", "help", "exit", "!exit"};
         String menuSelect;
+        String newTask = null;
         boolean dbModified = false, addToDBvalidData = false;
         int[] taskdim = {0,0};
 
@@ -25,7 +26,7 @@ public class Main {
             menuSelect = selectAction(menuItems, dbModified);
 
             if(menuSelect.equals(menuItems[0])){
-                addToDBvalidData = getDataToBeAddedToDB();
+                newTask = getDataToBeAddedToDB();
             }
 
             if(menuSelect.equals(menuItems[1])){
@@ -47,7 +48,7 @@ public class Main {
         }
     }
 
-    public static boolean getDataToBeAddedToDB() {
+    public static String getDataToBeAddedToDB() {
         System.out.println(GREEN + "Add entry to database" + RESET);
         System.out.println(RED_BOLD + "Does not store data in array yet" + RESET);
 
@@ -90,10 +91,10 @@ public class Main {
 
         if(addConfirmation){
             System.out.println("Adding data confirmed");
-        }else{
-            System.out.println("New data discarded");
+            return taskDesc +"," + taskDate + "," + taskFlag;
         }
-        return addConfirmation;
+        System.out.println("New data discarded");
+        return null;
     }
 
     public static boolean testInputDateFormat(String[] dateElements){
