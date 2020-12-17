@@ -27,10 +27,10 @@ public class Main {
 
             if(menuSelect.equals(menuItems[0])){
                 newTask = getDataToBeAddedToDB();
+                dbModified = (newTask != null);
             }
-
             if(menuSelect.equals(menuItems[1])){
-                removeFromDB();
+                dbModified = removeFromDB(tasks);
             }
             if(menuSelect.equals(menuItems[2])){
                 listDB(tasks);
@@ -46,6 +46,50 @@ public class Main {
                 break;
             }
         }
+    }
+
+    public static boolean removeFromDB(String tasksDB[][]) {
+        int idToDelete = -1;
+        boolean validID = false, removeConfirmed = false, recordRemoved=false;
+        String removeConfirmStr="";
+        System.out.println(GREEN + "Remove entries from data base" + RESET);
+        listDB(tasksDB);
+
+        do{
+            System.out.print("Enter record id number to be removed: ");
+            idToDelete = getIntegerInput();
+            validID = (idToDelete > 0) && (idToDelete <= tasksDB.length);
+            if(!validID){
+                System.out.println("Index out of range. Accepted values are in the range 0 to "+(tasksDB.length-1));
+            }
+        }while(!validID);
+
+        listDBmarked(tasksDB, idToDelete);
+        System.out.print("Confirm to delete id " + idToDelete + " [y/N]: ");
+        Scanner scan = new Scanner(System.in);
+        removeConfirmStr = scan.nextLine().trim();
+        if(removeConfirmStr.equals("y") || removeConfirmStr.equals("Y")){
+            removeConfirmed = true;
+        }
+
+        if(removeConfirmed){
+            tasksDB[idToDelete] = null;
+            recordRemoved = true;
+            System.out.println("Record removed (save changes do disk to re-iterate record id's)");
+        }else{
+            System.out.println("Removal aborted");        }
+
+        listDB(tasksDB);
+        return recordRemoved;
+    }
+
+    public static int getIntegerInput(){
+        Scanner scan = new Scanner(System.in);
+        while (!scan.hasNextInt()) {
+            scan.nextLine().trim();
+            System.out.print("Input not an INT. Enter valid int:");
+        }
+        return scan.nextInt();
     }
 
     public static String getDataToBeAddedToDB() {
@@ -140,11 +184,6 @@ public class Main {
       }
     }
 
-    public static void removeFromDB() {
-        System.out.println(GREEN + "Remove entries from data base" + RESET);
-        System.out.println(RED_BOLD + "This functionality is not implemented yet" + RESET);
-    }
-
     public static String selectAction(String menu[], boolean anyModyficationsDone) {
         printMainMenu(menu, anyModyficationsDone);
 
@@ -171,17 +210,26 @@ public class Main {
     }
 
     public static void listDB(String array[][]){
+        listDBmarked(array, -1);
+    }
+
+    public static void listDBmarked(String array[][], int mark){
 
         String[] wsbuffer = new String[array.length];
         prepareAligningBuffer(array, wsbuffer);
 
         System.out.println(GREEN + "Listing database entries:" + RESET);
         for(int i=0; i< array.length; i++){
-            System.out.print("["+i+"]\t" + array[i][0] + wsbuffer[i] + "\t");
-            for(int l=1; l<array[i].length; l++){
-                System.out.print(array[i][l] + "\t");
+            if(array[i] != null) {
+                if(i==mark){
+                    System.out.print(RED);
+                 }
+                System.out.print("[" + i + "]\t" + array[i][0] + wsbuffer[i] + "\t");
+                for (int l = 1; l < array[i].length; l++) {
+                    System.out.print(array[i][l] + "\t");
+                }
+                System.out.println( ((i==mark) ? RESET : "") );
             }
-            System.out.println();
         }
     }
 
@@ -189,7 +237,7 @@ public class Main {
         int maxCol1_width=0;
         // get max with of text from first column of array[][]
         for(int i=0; i< array.length; i++){
-            if (array[i][0].length() > maxCol1_width){
+            if (array[i]!=null && array[i][0].length() > maxCol1_width){
                 maxCol1_width = array[i][0].length();
             }
         }
@@ -197,7 +245,7 @@ public class Main {
         // prepare array of whitespaces for element in collumn 0 that are shorter then maxCol1_width
         for(int i=0; i< array.length; i++){
             StringBuilder sb = new StringBuilder();
-            if(array[i][0].length() < maxCol1_width){
+            if(array[i]!=null && array[i][0].length() < maxCol1_width){
                 for(int j=0; j<maxCol1_width-array[i][0].length();j++){
                     sb.append(" ");
                 }
@@ -252,7 +300,13 @@ public class Main {
         int maxMenuItems = ((anyModyficationsDone) ? 0 : -1) + menu.length;
         System.out.println("\n" + BLUE + "Please select an option:" + RESET);
         for(int i=0; i< maxMenuItems; i++){
-            System.out.println("* "+ menu[i]);
+            // Colour exit commands when any modyfications to DB performed
+            if(anyModyficationsDone && i >= menu.length-2){
+                System.out.print("* " + ((i == menu.length-2) ? GREEN : RED) );
+                System.out.println(menu[i] + RESET + ((i == menu.length-2) ? "\t(save & exit)" : "\t(discard changes)"));
+            }else {
+                System.out.println("* " + menu[i]);
+            }
         }
     }
 
