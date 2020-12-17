@@ -15,6 +15,7 @@ public class Main {
         boolean dbModified = false, addToDBvalidData = false;
         int[] taskdim = {0,0};
 
+        //TODO: zapytac o sciezke jesli nie znajdzie pliku
         inspectDBfromFile(database, taskdim);
         String[][] tasks = new String[taskdim[0]][taskdim[1]];
         readDBfromFile(database, tasks);
@@ -52,7 +53,7 @@ public class Main {
 
         Scanner scan = new Scanner(System.in);
         boolean dateFormatOK = false, taskFlag = true, addConfirmation = false;
-        String taskDesc, taskDate, taskFlagStr = "", addConfirmationStr = "notAsked";
+        String taskDesc, taskDate = null, taskFlagStr = "", addConfirmationStr = "notAsked";
         String[] taskDateTest = new String[3];
 
         // Enter data for the first filed
@@ -60,15 +61,13 @@ public class Main {
         taskDesc = scan.nextLine().trim().replaceAll(",", " ").replaceAll("\\s+", " ");
 
         // Enter data for the second filed
-        taskDate = askForDate();
         while(!dateFormatOK) {
             // Not the best test but it's a start
-            taskDateTest = splitDateForTesting(taskDate);
-
+            taskDateTest = splitDateForTesting(askForDate());
             dateFormatOK = testInputDateFormat(taskDateTest);
             if(!dateFormatOK){
                 System.out.println("Wrong format or values");
-                taskDate = askForDate();
+                continue;
             }
             taskDate = aditionalDateFormatting(taskDateTest);
         }
@@ -80,14 +79,13 @@ public class Main {
             taskFlag = Boolean.parseBoolean(taskFlagStr);
         }
 
-        // Display the generated entry
-        System.out.println("Given entry to store:\n\t" + taskDesc +"\t" + taskDate + "\t" + taskFlag);
-        if(!addConfirmation){
-            System.out.print("Confirm add record to database [Y/n]: ");
-            addConfirmationStr = scan.nextLine().trim();
-            if(addConfirmationStr.equals("y") || addConfirmationStr.equals("Y") || addConfirmationStr.length() == 0){
-                addConfirmation = true;
-            }
+        // Display the generated entry and ask for confirmation
+        System.out.print("Given entry to store:\n\t"
+                + taskDesc +"\t" + taskDate + "\t" + taskFlag
+                + "\nConfirm add record to database [Y/n]: ");
+        addConfirmationStr = scan.nextLine().trim();
+        if(addConfirmationStr.equals("y") || addConfirmationStr.equals("Y") || addConfirmationStr.length() == 0){
+            addConfirmation = true;
         }
 
         if(addConfirmation){
@@ -99,12 +97,9 @@ public class Main {
     }
 
     public static boolean testInputDateFormat(String[] dateElements){
-        if ( (testForInt(dateElements[0]) == null ||
-                testForInt(dateElements[1]) == null || testForInt(dateElements[2]) == null) ||
-                ((Integer.valueOf(dateElements[1])>12 || Integer.valueOf(dateElements[2])>31 )) ) {
-            return false;
-        }
-        return true;
+        return (testForInt(dateElements[0]) != null &&
+                testForInt(dateElements[1]) != null && testForInt(dateElements[2]) != null) &&
+                (Integer.valueOf(dateElements[1]) <= 12 && Integer.valueOf(dateElements[2]) <= 31);
     }
 
     public static String[] splitDateForTesting(String dateStr){
@@ -116,7 +111,6 @@ public class Main {
             dateElements[1]="x";
             dateElements[2]="x";
         }
-        //System.out.println(dateElements[0] + " " + dateElements[1] + " " + dateElements[2]);
         return dateElements;
     }
 
@@ -226,6 +220,7 @@ public class Main {
                 }
             }
         }catch(FileNotFoundException e) {
+            // TODO ask for a path to file
             System.out.println("Missing file "+fname);
         }
     }
@@ -246,6 +241,7 @@ public class Main {
                 }
             }
         }catch(FileNotFoundException e) {
+            // TODO ask for a path to file
             System.out.println("Missing file "+fname);
         }
         dim[1] = maxElements;
