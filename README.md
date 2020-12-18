@@ -13,8 +13,4 @@ weryfikacji danych od użytkownika)
 wyjście bez zapisywania danych do pliku (pominięcie zmian)
 
 TODO:
-* zapis do pliku po usunięciu danych 
-* rozszeżenie tablicy z wczytaną bazą danych i dodanie nowego wpisu.
-* dodawanie danych będzie najpierw sprawdzać, czy z bazy nie 
-zostało coś usunięte i jeśli tak dane zostaną wpisane w pusty 
-rekord (bez konieczności rozszeżania tablicy).
+* ulepszenia i poprawki kodu
