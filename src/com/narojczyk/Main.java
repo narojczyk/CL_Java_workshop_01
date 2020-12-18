@@ -2,9 +2,11 @@ package com.narojczyk;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 import static com.narojczyk.ConsoleColors.*;
+import static java.util.Arrays.copyOf;
 
 public class Main {
 
@@ -28,6 +30,7 @@ public class Main {
             if(menuSelect.equals(menuItems[0])){
                 newTask = getDataToBeAddedToDB();
                 dbModified = (newTask != null);
+                tasks = addTaskToArray(tasks, newTask, whereToAddData(tasks));
             }
             if(menuSelect.equals(menuItems[1])){
                 dbModified = removeFromDB(tasks);
@@ -46,6 +49,32 @@ public class Main {
                 break;
             }
         }
+    }
+
+    public static String[][] addTaskToArray(String tasksDB[][], String toAdd, int pos){
+        int tablength = tasksDB.length;
+
+        if(pos >= tablength){
+            tasksDB = Arrays.copyOf(tasksDB, ++tablength);
+        }
+
+        if(pos < tablength) {
+            tasksDB[pos] = toAdd.split(",");
+            System.out.println("New record added at position [" + pos + "]");
+        }
+        // Nie kumam czemu to jest konieczne?? tasksDB przyjmuje wskaźnik do nowej tablicy od Arrays.copyOf()
+        return tasksDB;
+    }
+
+    public static int whereToAddData(String tasksDB[][]){
+        int tablength = tasksDB.length;
+
+        for(int i=0; i<tablength; i++){
+            if(tasksDB[i] == null){
+                return i;
+            }
+        }
+        return tablength;
     }
 
     public static boolean removeFromDB(String tasksDB[][]) {
@@ -94,7 +123,6 @@ public class Main {
 
     public static String getDataToBeAddedToDB() {
         System.out.println(GREEN + "Add entry to database" + RESET);
-        System.out.println(RED_BOLD + "Does not store data in array yet" + RESET);
 
         Scanner scan = new Scanner(System.in);
         boolean dateFormatOK = false, taskFlag = true, addConfirmation = false;
