@@ -46,9 +46,33 @@ public class Main {
             // Exit the program if either of last 2 exit options is seleced
             if(menuSelect.equals(menuItems[menuItems.length-1]) ||
                menuSelect.equals(menuItems[menuItems.length-2]) ){
+                // Save data to file only if "exit" command is issued
+                if(menuSelect.equals(menuItems[menuItems.length-2])) {
+                    saveToDisk(tasks, database);
+                }
                 break;
             }
         }
+    }
+
+    public static void saveToDisk(String tasksDB[][], String fileName){
+        int rec_i_length=0;
+
+        StringBuilder pushRecord = new StringBuilder();
+
+        for(int i = 0; i < tasksDB.length; i++){
+            if(tasksDB[i] != null){
+                rec_i_length = tasksDB[i].length;
+                for(int j = 0; j < rec_i_length; j++){
+                    pushRecord.append(tasksDB[i][j]+ ((j < rec_i_length-1 ) ? "," : "\n"));
+                }
+            }
+            System.out.print(i + " : " + pushRecord.toString());
+
+            //delete all contents from previous iteration
+            pushRecord.delete(0,  pushRecord.length());
+        }
+
     }
 
     public static String[][] addTaskToArray(String tasksDB[][], String toAdd, int pos){
