@@ -1,11 +1,14 @@
 package com.narojczyk;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
 import static com.narojczyk.ConsoleColors.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Arrays.copyOf;
 
 public class Main {
@@ -47,19 +50,38 @@ public class Main {
             if(menuSelect.equals(menuItems[menuItems.length-1]) ||
                menuSelect.equals(menuItems[menuItems.length-2]) ){
                 // Save data to file only if "exit" command is issued
-                if(menuSelect.equals(menuItems[menuItems.length-2])) {
-                    saveToDisk(tasks, database);
+                if(menuSelect.equals(menuItems[menuItems.length-2]) && dbModified) {
+                    try {
+                        saveToDisk(tasks, database);
+                    }catch (FileNotFoundException e){
+                        System.out.println("Things went south when writing to file");
+                        e.printStackTrace();
+                    }
                 }
                 break;
             }
         }
     }
 
-    public static void saveToDisk(String tasksDB[][], String fileName){
+    public static void saveToDisk(String tasksDB[][], String fileName) throws FileNotFoundException {
+        /* Zapisz do pliku tymczasowego, jeżeli nie będzie błędów przekopiuj tymczasowy na wynikowy */
         int rec_i_length=0;
+        String tmpFileName= fileName.replaceFirst("\\.([a-zA-Z]+)", "_tmp\\.$1");
+        Path tempFilePth = Paths.get(tmpFileName);
+        Path outputFilePth = Paths.get(fileName);
 
         StringBuilder pushRecord = new StringBuilder();
 
+        if(Files.exists(tempFilePth)){
+            try {
+                Files.delete(tempFilePth);
+            } catch (IOException e) {
+                System.out.println("No write premissions on temp file "+tmpFileName);
+                e.printStackTrace();
+            }
+        }
+
+        PrintWriter write = new PrintWriter(tmpFileName);
         for(int i = 0; i < tasksDB.length; i++){
             if(tasksDB[i] != null){
                 rec_i_length = tasksDB[i].length;
@@ -67,12 +89,18 @@ public class Main {
                     pushRecord.append(tasksDB[i][j]+ ((j < rec_i_length-1 ) ? "," : "\n"));
                 }
             }
-            System.out.print(i + " : " + pushRecord.toString());
-
+            write.print(pushRecord.toString());
             //delete all contents from previous iteration
             pushRecord.delete(0,  pushRecord.length());
         }
+        write.close();
 
+        try {
+            Files.copy(tempFilePth, outputFilePth, REPLACE_EXISTING );
+        } catch (IOException e) {
+            System.out.println("Failed to copy temp file "+tmpFileName+" to output file "+fileName);
+            e.printStackTrace();
+        }
     }
 
     public static String[][] addTaskToArray(String tasksDB[][], String toAdd, int pos){
