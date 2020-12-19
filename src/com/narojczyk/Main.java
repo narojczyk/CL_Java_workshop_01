@@ -18,7 +18,7 @@ public class Main {
         String menuItems[] = {"add", "remove", "list", "help", "exit", "!exit"};
         String menuSelect;
         String newTask = null;
-        boolean dbModified = false, addToDBvalidData = false;
+        boolean dbModified = false, addToDBvalidData = false, recRemoved=false;
         int[] taskdim = {0,0};
 
         //TODO: zapytac o sciezke jesli nie znajdzie pliku
@@ -32,11 +32,14 @@ public class Main {
 
             if(menuSelect.equals(menuItems[0])){
                 newTask = getDataToBeAddedToDB();
-                dbModified = (newTask != null);
-                tasks = addTaskToArray(tasks, newTask, whereToAddData(tasks));
+                dbModified = (!dbModified) ? (newTask != null) : dbModified;
+                if(newTask != null) {
+                    tasks = addTaskToArray(tasks, newTask, whereToAddData(tasks));
+                }
             }
             if(menuSelect.equals(menuItems[1])){
-                dbModified = removeFromDB(tasks);
+                recRemoved = removeFromDB(tasks);
+                dbModified = (!dbModified) ? recRemoved : dbModified;
             }
             if(menuSelect.equals(menuItems[2])){
                 listDB(tasks);
@@ -139,9 +142,9 @@ public class Main {
         do{
             System.out.print("Enter record id number to be removed: ");
             idToDelete = getIntegerInput();
-            validID = (idToDelete > 0) && (idToDelete <= tasksDB.length);
+            validID = (idToDelete >= 0) && (idToDelete < tasksDB.length) && (tasksDB[idToDelete] != null);
             if(!validID){
-                System.out.println("Index out of range. Accepted values are in the range 0 to "+(tasksDB.length-1));
+                System.out.println("Index out of range. Select id from above list");
             }
         }while(!validID);
 
@@ -173,12 +176,20 @@ public class Main {
         return scan.nextInt();
     }
 
+    public static String getStringInput(){
+        Scanner scan = new Scanner(System.in);
+        while (!scan.hasNextLine()) {
+            scan.nextLine();
+        }
+        return scan.nextLine().trim();
+    }
+
     public static String getDataToBeAddedToDB() {
         System.out.println(GREEN + "Add entry to database" + RESET);
 
         Scanner scan = new Scanner(System.in);
         boolean dateFormatOK = false, taskFlag = true, addConfirmation = false;
-        String taskDesc, taskDate = null, taskFlagStr = "", addConfirmationStr = "notAsked";
+        String taskDesc, taskDate = null,  addConfirmationStr = "notAsked";
         String[] taskDateTest = new String[3];
 
         // Enter data for the first filed
@@ -198,19 +209,24 @@ public class Main {
         }
 
         // Enter data for the third filed
-        while( (taskFlag && !taskFlagStr.equals("true")) || (!taskFlag && !taskFlagStr.equals("false") ) ){
+        System.out.print("Type in task flag [true/false]: ");
+        while(!scan.hasNextBoolean()){
+            scan.nextLine();
             System.out.print("Type in task flag [true/false]: ");
-            taskFlagStr = scan.nextLine().trim();
-            taskFlag = Boolean.parseBoolean(taskFlagStr);
         }
+        taskFlag = scan.nextBoolean();
 
         // Display the generated entry and ask for confirmation
         System.out.print("Given entry to store:\n\t"
                 + taskDesc +"\t" + taskDate + "\t" + taskFlag
                 + "\nConfirm add record to database [Y/n]: ");
-        addConfirmationStr = scan.nextLine().trim();
-        if(addConfirmationStr.equals("y") || addConfirmationStr.equals("Y") || addConfirmationStr.length() == 0){
+        addConfirmationStr = getStringInput();
+
+        if(addConfirmationStr != null &&
+                (addConfirmationStr.equalsIgnoreCase("y") || addConfirmationStr.length() == 0)){
             addConfirmation = true;
+        }else{
+            addConfirmation = false;
         }
 
         if(addConfirmation){
