@@ -22,16 +22,10 @@ public class Main {
         int[] taskdim = {0,0};
 
         //TODO: zapytac o sciezke jesli nie znajdzie pliku
-        /*inspectDBfromFile(database, taskdim);
-        String[][] tasks = new String[taskdim[0]][taskdim[1]];
-        readDBfromFile(database, tasks);*/
-
-        String[][] tasks = new String[1][3];
-        tasks[0] = null;
-        tasks = readDBfromFileDev(database, tasks);
+        String[][] tasks = readDBfromFileDev(database);
 
         // main program loop
-        while (true){
+        while (true && (tasks != null)){
             menuSelect = selectAction(menuItems, dbModified);
 
             if(menuSelect.equals(menuItems[0])){
@@ -107,6 +101,8 @@ public class Main {
         } catch (IOException e) {
             System.out.println("Failed to copy temp file "+tmpFileName+" to output file "+fileName);
             e.printStackTrace();
+        }finally {
+            System.out.println("Saved database to file");
         }
     }
 
@@ -121,7 +117,6 @@ public class Main {
             tasksDB[pos] = toAdd.split(",");
             System.out.println("New record added at position [" + pos + "]");
         }
-        // Nie kumam czemu to jest konieczne?? tasksDB przyjmuje wskaźnik do nowej tablicy od Arrays.copyOf()
         return tasksDB;
     }
 
@@ -252,9 +247,9 @@ public class Main {
         if(dateStr.split("-").length == 3){
             dateElements = dateStr.split("-");
         }else{
-            dateElements[0]="x";
-            dateElements[1]="x";
-            dateElements[2]="x";
+            dateElements[0]=null;
+            dateElements[1]=null;
+            dateElements[2]=null;
         }
         return dateElements;
     }
@@ -356,8 +351,9 @@ public class Main {
         }
     }
 
-    public static String[][] readDBfromFileDev(String fname, String array[][]){
+    public static String[][] readDBfromFileDev(String fname/*, String array[][]*/){
         // TODO add explicit path to a file (does not work now when run from console
+        String array[][] = {null};
         String getLine = null;
         File file = new File(fname);
         try {
@@ -369,49 +365,10 @@ public class Main {
         }catch(FileNotFoundException e) {
             // TODO ask for a path to file
             System.out.println("Missing file "+fname);
+            return null;
         }
         return array;
     }
-    /*
-    public static void readDBfromFile(String fname, String array[][]){
-        // TODO add explicit path to a file (does not work now when run from console
-        File file = new File(fname);
-        int i=-1;
-        try {
-            Scanner scan = new Scanner(file);
-            while(scan.hasNextLine()) {
-                array[++i] = scan.nextLine().split(",");
-                for(int j=0; j<array[i].length; j++){
-                    array[i][j] = array[i][j].trim();
-                }
-            }
-        }catch(FileNotFoundException e) {
-            // TODO ask for a path to file
-            System.out.println("Missing file "+fname);
-        }
-    }
-
-    public static void inspectDBfromFile(String fname, int dim[]){
-        // TODO add explicit path to a file (does not work now when run from console
-        int maxElements = 0, currentNumOfElements;
-        dim[0] = 0;
-        dim[1] = 0;
-        File file = new File(fname);
-        try {
-            Scanner scan = new Scanner(file);
-            while(scan.hasNextLine()) {
-                dim[0]++;
-                currentNumOfElements = scan.nextLine().trim().split(",").length;
-                if(maxElements < currentNumOfElements){
-                    maxElements = currentNumOfElements;
-                }
-            }
-        }catch(FileNotFoundException e) {
-            // TODO ask for a path to file
-            System.out.println("Missing file "+fname);
-        }
-        dim[1] = maxElements;
-    }*/
 
     public static void printMainMenu(String menu[], boolean anyModyficationsDone){
         int maxMenuItems = ((anyModyficationsDone) ? 0 : -1) + menu.length;
