@@ -22,9 +22,13 @@ public class Main {
         int[] taskdim = {0,0};
 
         //TODO: zapytac o sciezke jesli nie znajdzie pliku
-        inspectDBfromFile(database, taskdim);
+        /*inspectDBfromFile(database, taskdim);
         String[][] tasks = new String[taskdim[0]][taskdim[1]];
-        readDBfromFile(database, tasks);
+        readDBfromFile(database, tasks);*/
+
+        String[][] tasks = new String[1][3];
+        tasks[0] = null;
+        tasks = readDBfromFileDev(database, tasks);
 
         // main program loop
         while (true){
@@ -352,6 +356,23 @@ public class Main {
         }
     }
 
+    public static String[][] readDBfromFileDev(String fname, String array[][]){
+        // TODO add explicit path to a file (does not work now when run from console
+        String getLine = null;
+        File file = new File(fname);
+        try {
+            Scanner scan = new Scanner(file);
+            while(scan.hasNextLine()) {
+                getLine = scan.nextLine();
+                array = addTaskToArray(array, getLine, whereToAddData(array));
+            }
+        }catch(FileNotFoundException e) {
+            // TODO ask for a path to file
+            System.out.println("Missing file "+fname);
+        }
+        return array;
+    }
+    /*
     public static void readDBfromFile(String fname, String array[][]){
         // TODO add explicit path to a file (does not work now when run from console
         File file = new File(fname);
@@ -390,7 +411,7 @@ public class Main {
             System.out.println("Missing file "+fname);
         }
         dim[1] = maxElements;
-    }
+    }*/
 
     public static void printMainMenu(String menu[], boolean anyModyficationsDone){
         int maxMenuItems = ((anyModyficationsDone) ? 0 : -1) + menu.length;
