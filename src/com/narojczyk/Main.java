@@ -9,23 +9,25 @@ import java.util.Scanner;
 
 import static com.narojczyk.ConsoleColors.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static java.util.Arrays.copyOf;
 
 public class Main {
 
     public static void main(String[] args) {
         String database = "tasks.csv";
-        String menuItems[] = {"add", "remove", "list", "help", "exit", "!exit"};
+        String[] menuItems = {"add", "remove", "list", "help", "exit", "!exit"};
         String menuSelect;
-        String newTask = null;
-        boolean dbModified = false, addToDBvalidData = false, recRemoved=false;
-        int[] taskdim = {0,0};
+        String newTask;
+        boolean dbModified = false, recRemoved;
 
         //TODO: zapytac o sciezke jesli nie znajdzie pliku
+        //TODO: split by '\ ,\ [0-9tf] (replace this on the fly with ';;' and split by this)
+        //  to use ',' in task description string
         String[][] tasks = readDBfromFileDev(database);
 
         // main program loop
-        while (true && (tasks != null)){
+        while (tasks != null){
+            //TODO select 'help' when empty action given
+            //TODO fix double newline before "Unrecognized option" comment for empty string input
             menuSelect = selectAction(menuItems, dbModified);
 
             if(menuSelect.equals(menuItems[0])){
@@ -64,9 +66,9 @@ public class Main {
         }
     }
 
-    public static void saveToDisk(String tasksDB[][], String fileName) throws FileNotFoundException {
+    public static void saveToDisk(String[][] tasksDB, String fileName) throws FileNotFoundException {
         /* Zapisz do pliku tymczasowego, jeżeli nie będzie błędów przekopiuj tymczasowy na wynikowy */
-        int rec_i_length=0;
+        int rec_i_length;
         String tmpFileName= fileName.replaceFirst("\\.([a-zA-Z]+)", "_tmp\\.$1");
         Path tempFilePth = Paths.get(tmpFileName);
         Path outputFilePth = Paths.get(fileName);
@@ -83,16 +85,16 @@ public class Main {
         }
 
         PrintWriter write = new PrintWriter(tmpFileName);
-        for(int i = 0; i < tasksDB.length; i++){
-            if(tasksDB[i] != null){
-                rec_i_length = tasksDB[i].length;
-                for(int j = 0; j < rec_i_length; j++){
-                    pushRecord.append(tasksDB[i][j]+ ((j < rec_i_length-1 ) ? "," : "\n"));
+        for (String[] strings : tasksDB) {
+            if (strings != null) {
+                rec_i_length = strings.length;
+                for (int j = 0; j < rec_i_length; j++) {
+                    pushRecord.append(strings[j]).append((j < rec_i_length - 1) ? "," : "\n");
                 }
             }
             write.print(pushRecord.toString());
             //delete all contents from previous iteration
-            pushRecord.delete(0,  pushRecord.length());
+            pushRecord.delete(0, pushRecord.length());
         }
         write.close();
 
@@ -106,7 +108,7 @@ public class Main {
         }
     }
 
-    public static String[][] addTaskToArray(String tasksDB[][], String toAdd, int pos){
+    public static String[][] addTaskToArray(String[][] tasksDB, String toAdd, int pos){
         int tablength = tasksDB.length;
 
         if(pos >= tablength){
@@ -115,12 +117,15 @@ public class Main {
 
         if(pos < tablength) {
             tasksDB[pos] = toAdd.split(",");
+            for(int i=0; i<tasksDB[pos].length; i++){
+                tasksDB[pos][i] = tasksDB[pos][i].trim();
+            }
             System.out.println("New record added at position [" + pos + "]");
         }
         return tasksDB;
     }
 
-    public static int whereToAddData(String tasksDB[][]){
+    public static int whereToAddData(String[][] tasksDB){
         int tablength = tasksDB.length;
 
         for(int i=0; i<tablength; i++){
@@ -131,10 +136,10 @@ public class Main {
         return tablength;
     }
 
-    public static boolean removeFromDB(String tasksDB[][]) {
-        int idToDelete = -1;
-        boolean validID = false, removeConfirmed = false, recordRemoved=false;
-        String removeConfirmStr="";
+    public static boolean removeFromDB(String[][] tasksDB) {
+        int idToDelete;
+        boolean validID, removeConfirmed = false, recordRemoved=false;
+        String removeConfirmStr;
         System.out.println(GREEN + "Remove entries from data base" + RESET);
         listDB(tasksDB);
 
@@ -160,8 +165,8 @@ public class Main {
             recordRemoved = true;
             System.out.println("Record removed (save changes do disk to re-iterate record id's)");
         }else{
-            System.out.println("Removal aborted");        }
-
+            System.out.println("Removal aborted");
+        }
         listDB(tasksDB);
         return recordRemoved;
     }
@@ -169,7 +174,7 @@ public class Main {
     public static int getIntegerInput(){
         Scanner scan = new Scanner(System.in);
         while (!scan.hasNextInt()) {
-            scan.nextLine().trim();
+            scan.nextLine();
             System.out.print("Input not an INT. Enter valid int:");
         }
         return scan.nextInt();
@@ -187,9 +192,9 @@ public class Main {
         System.out.println(GREEN + "Add entry to database" + RESET);
 
         Scanner scan = new Scanner(System.in);
-        boolean dateFormatOK = false, taskFlag = true, addConfirmation = false;
-        String taskDesc, taskDate = null,  addConfirmationStr = "notAsked";
-        String[] taskDateTest = new String[3];
+        boolean dateFormatOK = false, taskFlag, addConfirmation = false;
+        String taskDesc, taskDate = null,  addConfirmationStr;
+        String[] taskDateTest;
 
         // Enter data for the first filed
         System.out.print("Type in task description: ");
@@ -221,11 +226,8 @@ public class Main {
                 + "\nConfirm add record to database [Y/n]: ");
         addConfirmationStr = getStringInput();
 
-        if(addConfirmationStr != null &&
-                (addConfirmationStr.equalsIgnoreCase("y") || addConfirmationStr.length() == 0)){
+        if(addConfirmationStr.equalsIgnoreCase("y") || addConfirmationStr.length() == 0){
             addConfirmation = true;
-        }else{
-            addConfirmation = false;
         }
 
         if(addConfirmation){
@@ -239,7 +241,7 @@ public class Main {
     public static boolean testInputDateFormat(String[] dateElements){
         return (testForInt(dateElements[0]) != null &&
                 testForInt(dateElements[1]) != null && testForInt(dateElements[2]) != null) &&
-                (Integer.valueOf(dateElements[1]) <= 12 && Integer.valueOf(dateElements[2]) <= 31);
+                (Integer.parseInt(dateElements[1]) <= 12 && Integer.parseInt(dateElements[2]) <= 31);
     }
 
     public static String[] splitDateForTesting(String dateStr){
@@ -279,7 +281,7 @@ public class Main {
       }
     }
 
-    public static String selectAction(String menu[], boolean anyModyficationsDone) {
+    public static String selectAction(String[] menu, boolean anyModyficationsDone) {
         printMainMenu(menu, anyModyficationsDone);
 
         Scanner scan = new Scanner(System.in);
@@ -289,10 +291,10 @@ public class Main {
         while (!validSelection) {
             System.out.print("Type in your selection: ");
             selection = scan.nextLine().trim();
-            for(int i=0; i< menu.length; i++){
-                if(selection.equals(menu[i])){
+            for (String s : menu) {
+                if (selection.equals(s)) {
                     validSelection = true;
-                    System.out.println(" <"+selection+"> command accepted");
+                    System.out.println(" <" + selection + "> command accepted");
                     break;
                 }
             }
@@ -300,61 +302,75 @@ public class Main {
                 System.out.println(RED + "Unrecognized option " + RESET + "\"" + selection + "\"");
             }
         }
-
         return selection;
     }
 
-    public static void listDB(String array[][]){
+    public static void listDB(String[][] array){
         listDBmarked(array, -1);
     }
 
-    public static void listDBmarked(String array[][], int mark){
-
-        String[] wsbuffer = new String[array.length];
-        prepareAligningBuffer(array, wsbuffer);
+    public static void listDBmarked(String[][] array, int mark){
+        String[] wsbuffer = prepareAligningBuffer(array);
 
         System.out.println(GREEN + "Listing database entries:" + RESET);
         for(int i=0; i< array.length; i++){
             if(array[i] != null) {
                 if(i==mark){
                     System.out.print(RED);
-                 }
+                }
+                // ### remove this to remove the background highlighting of every odd row >>
+                if(i%2 != 0){
+                    System.out.print(YELLOW_BACKGROUND);
+                }
+                //  << ###
                 System.out.print("[" + i + "]\t" + array[i][0] + wsbuffer[i] + "\t");
                 for (int l = 1; l < array[i].length; l++) {
                     System.out.print(array[i][l] + "\t");
                 }
+                // ### remove this to remove the background highlighting of every odd row >>
+                if(i%2 != 0){
+                    System.out.print(RESET);
+                }
+                //  << ###
                 System.out.println( ((i==mark) ? RESET : "") );
             }
         }
     }
 
-    public static void prepareAligningBuffer(String array[][], String sp_buff[]){
-        int maxCol1_width=0;
-        // get max with of text from first column of array[][]
-        for(int i=0; i< array.length; i++){
-            if (array[i]!=null && array[i][0].length() > maxCol1_width){
-                maxCol1_width = array[i][0].length();
+    public static int getMaxWidthOfColumn(String[][] array, int column){
+        int maxColumnWidth=0;
+        for(int i=0; i < array.length; i++){
+            if (array[i] != null && array[i][column].length() > maxColumnWidth){
+                maxColumnWidth = array[i][column].length();
             }
         }
+        return maxColumnWidth;
+    }
 
-        // prepare array of whitespaces for element in collumn 0 that are shorter then maxCol1_width
-        for(int i=0; i< array.length; i++){
-            StringBuilder sb = new StringBuilder();
-            if(array[i]!=null && array[i][0].length() < maxCol1_width){
-                for(int j=0; j<maxCol1_width-array[i][0].length();j++){
-                    sb.append(" ");
-                }
+    public static String[] prepareAligningBuffer(String[][] array){
+        int maxColumn0Width = getMaxWidthOfColumn(array, 0);
+        int arrLength = array.length;
+        String[] sp_buff = new String[arrLength];
+
+        // prepare array of whitespaces for elements in column 0 that are shorter then maxColumn0Width
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i < arrLength; i++){
+            if(array[i] != null && array[i][0].length() < maxColumn0Width){
+                sb.append(" ".repeat(Math.max(0, maxColumn0Width - array[i][0].length()) ) );
                 sp_buff[i] = sb.toString();
             }else{
                 sp_buff[i]="";
             }
+            // Clear string buffer on subsequent iterations
+            sb.delete(0,  sb.length());
         }
+        return sp_buff;
     }
 
-    public static String[][] readDBfromFileDev(String fname/*, String array[][]*/){
+    public static String[][] readDBfromFileDev(String fname){
         // TODO add explicit path to a file (does not work now when run from console
-        String array[][] = {null};
-        String getLine = null;
+        String[][] array = {null};
+        String getLine;
         File file = new File(fname);
         try {
             Scanner scan = new Scanner(file);
@@ -370,11 +386,11 @@ public class Main {
         return array;
     }
 
-    public static void printMainMenu(String menu[], boolean anyModyficationsDone){
+    public static void printMainMenu(String[] menu, boolean anyModyficationsDone){
         int maxMenuItems = ((anyModyficationsDone) ? 0 : -1) + menu.length;
         System.out.println("\n" + BLUE + "Please select an option:" + RESET);
         for(int i=0; i< maxMenuItems; i++){
-            // Colour exit commands when any modyfications to DB performed
+            // Colour exit commands when any modifications to DB performed
             if(anyModyficationsDone && i >= menu.length-2){
                 System.out.print("* " + ((i == menu.length-2) ? GREEN : RED) );
                 System.out.println(menu[i] + RESET + ((i == menu.length-2) ? "\t(save & exit)" : "\t(discard changes)"));
@@ -384,7 +400,7 @@ public class Main {
         }
     }
 
-    public static void printHelp(String menu[]){
+    public static void printHelp(String[] menu){
          System.out.println(GREEN + "Menu items description:" + RESET);
         for(int i=0; i< menu.length; i++){
             System.out.print(" " + YELLOW_BOLD + menu[i] + RESET + "\t");
